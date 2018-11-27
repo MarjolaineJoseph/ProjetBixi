@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title></title>
+        
+        <style>            
+            #divTableau {
+                border-style: solid;            
+                border-color: #808080;
+            }
+            
+            th{
+                background-color: #eee;
+                border: 1px solid #DCDCDC;
+                color: #808080;
+                
+            }
+            
+            body {
+                color: #131111;
+                font-family: Arial;
+            }
+
+            footer {
+                color: #131111;
+                font-size: large;
+                text-align: center;
+                padding-top: 50px;
+                background-color: #e20000;
+                width: 100.5%;
+                height: 200px;
+            }
+
+            a {
+               color: #131111;
+               text-decoration: none; 
+            }
+
+            table {
+                border-collapse: collapse;
+            }
+
+            th, td{
+	            padding: 10px;
+                text-align: center;
+            }
+        </style>      
+       
+    </head>
+    
+
+    <body>
+        <header>
+            <img src="logo2.png" width="295.5" height="175" alt="logo">
+        </header>
+
+        <div id="map" style="width:100%;height:780px"></div>
+        <p>
+            <img src="redmarker2.png" width="128" height="128" alt="redmarker"> Bixi disponibles
+            <img src="graymarker.png" width="128" height="128" alt="logo"> Aucun Bixi pour l'instant
+        </p>
+        <br>
+        <div id="divTableau" style="width: 100%; height: 600px; overflow-y: scroll;">
+                <table id="tableauBixi" style=" width: 100%;">
+                    <tr id="firstrow">
+
+                        <th>No</th>
+                        <th>RUE</th>
+                        <th onclick="trieDocks()">DOCKS</th>
+                        <th onclick="trieBixi()">BIXI</th>
+                    </tr>
+                </table>
+        </div>
+
+        <footer>
+            Marjolaine Joseph © 2016<br>
+            <a href="http://montreal.bixi.com/en">Bixi</a>           
+        </footer>
+
+
+        <script>
+            var bixi2;
+            var xhttp = new XMLHttpRequest();
+
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    var bixi = JSON.parse(this.responseText);
+                    var monTableau = "";
+                    bixi2 = bixi;
+
+                    for (var i = 0; i < bixi.stations.length; i++) {
+                        monTableau += "<tr><td>" + bixi.stations[i].id + "</td>" +
+                        "<td>" + bixi.stations[i].s + "</td>" +
+                        "<td>" + bixi.stations[i].da + "</td>" +
+                        "<td>" + bixi.stations[i].ba + "</td><tr>"
+                    }
+                    document.getElementById("tableauBixi").innerHTML += monTableau;
+
+                }
+            }
+
+            xhttp.open("Get", "https://secure.bixi.com/data/stations.json", false);
+            xhttp.send();
+
+            function myMap(bixi) {
+
+                var myCenter = new google.maps.LatLng(45.5017, -73.5673);
+                var mapCanvas = document.getElementById("map");
+                var mapOptions = { center: myCenter, zoom: 13 };
+                var map = new google.maps.Map(mapCanvas, mapOptions);
+
+                for (var i = 0; i < bixi2.stations.length; i++) {
+                    var latlong = new google.maps.LatLng(bixi2.stations[i].la, bixi2.stations[i].lo);
+                    var contentString = '<div id="iw_container">' +
+                                '<div class="iw_title">' + bixi2.stations[i].s + '</div>' +
+                                '<br>' +
+                                '<div class="iw_content">Docks: ' + bixi2.stations[i].da + ' BIXI: ' + bixi2.stations[i].ba + '</div>' +
+                                '</div>';
+
+                    if (bixi2.stations[i].ba > 0)
+                        var icon = {
+                            url: "redmarker.png",
+                            scaledSize: new google.maps.Size(50, 50),
+                            origin: new google.maps.Point(0, 0),
+                            anchor: new google.maps.Point(0, 0)
+                        };
+                    else
+                        var icon = {
+                            url: "graymarker.png",
+                            scaledSize: new google.maps.Size(50, 50),
+                            origin: new google.maps.Point(0, 0),
+                            anchor: new google.maps.Point(0, 0)
+                        };
+                    marker = new google.maps.Marker({
+                        position: latlong,
+                        map: map,
+                        contentString: contentString,
+                        icon: icon
+                    });
+
+                    var infowindow = new google.maps.InfoWindow({});
+
+                    marker.addListener('click', function () {
+                        infowindow.setContent(this.contentString);
+                        infowindow.open(map, this);
+                        map.setCenter(this.getPosition());
+                    });
+                }
+            }
+
+
+            function trieDocks() {
+                var monTableau = "";
+                while (tableauBixi.rows.length > 1) {
+                    tableauBixi.deleteRow(1);
+                }
+
+                bixi2.stations.sort(function (obj1, obj2) {
+                    return obj2.da - obj1.da;
+                });
+
+                for (var i = 0; i < bixi2.stations.length; i++) {
+                    monTableau += "<tr><td>" + bixi2.stations[i].id + "</td>" +
+                        "<td>" + bixi2.stations[i].s + "</td>" +
+                        "<td>" + bixi2.stations[i].da + "</td>" +
+                        "<td>" + bixi2.stations[i].ba + "</td><tr>"
+                }
+                document.getElementById("tableauBixi").innerHTML += monTableau;
+            }
+
+            function trieBixi() {
+                var monTableau = "";
+                while (tableauBixi.rows.length > 1) {
+                    tableauBixi.deleteRow(1);
+                }
+
+                bixi2.stations.sort(function (obj1, obj2) {
+                    return obj2.ba - obj1.ba;
+                });
+
+                for (var i = 0; i < bixi2.stations.length; i++) {
+                    monTableau += "<tr><td>" + bixi2.stations[i].id + "</td>" +
+                        "<td>" + bixi2.stations[i].s + "</td>" +
+                        "<td>" + bixi2.stations[i].da + "</td>" +
+                        "<td>" + bixi2.stations[i].ba + "</td><tr>"
+                }
+                document.getElementById("tableauBixi").innerHTML += monTableau;
+            }
+
+            </script>
+            <script src="https://maps.googleapis.com/maps/api/js?callback=myMap"></script>
+    </body>
+</html>
